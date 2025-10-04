@@ -1,34 +1,45 @@
-"use client"; // allows hooks like useState
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Inventory() {
   const [inventory, setInventory] = useState([]);
-
   const [itemName, setItemName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [threshold, setThreshold] = useState("");
   const [purchaseLink, setPurchaseLink] = useState("");
 
-  const handleSubmit = (e) => {
+  // Step 2: Fetch inventory from API on mount
+  useEffect(() => {
+    fetch("/api/inventory")
+      .then((res) => res.json())
+      .then((data) => setInventory(data))
+      .catch((err) => console.error(err));
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const existingIndex = inventory.findIndex(
-      (item) => item.itemName === itemName
-    );
+    const newItem = { itemName, quantity, threshold, purchaseLink };
 
-    if (existingIndex !== -1) {
-      const updated = [...inventory];
-      updated[existingIndex] = { itemName, quantity, threshold, purchaseLink };
-      setInventory(updated);
-    } else {
-      setInventory([...inventory, { itemName, quantity, threshold, purchaseLink }]);
+    // Step 2: Send new item to API
+    try {
+      const res = await fetch("/api/inventory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newItem),
+      });
+      const savedItem = await res.json();
+
+      // Update local state with saved item
+      setInventory((prev) => [...prev, savedItem]);
+      setItemName("");
+      setQuantity("");
+      setThreshold("");
+      setPurchaseLink("");
+    } catch (err) {
+      console.error(err);
     }
-
-    setItemName("");
-    setQuantity("");
-    setThreshold("");
-    setPurchaseLink("");
   };
 
   return (
@@ -94,14 +105,18 @@ export default function Inventory() {
             </tr>
           </thead>
           <tbody>
-            {inventory.map((item, index) => (
-              <tr key={index}>
+            {inventory.map((item) => (
+              <tr key={item.id}>
                 <td className="border border-gray-400 p-2">{item.itemName}</td>
                 <td className="border border-gray-400 p-2">{item.quantity}</td>
                 <td className="border border-gray-400 p-2">{item.threshold}</td>
                 <td className="border border-gray-400 p-2">
                   {item.purchaseLink && (
-                    <a href={item.purchaseLink} target="_blank" className="text-blue-500 underline">
+                    <a
+                      href={item.purchaseLink}
+                      target="_blank"
+                      className="text-blue-500 underline"
+                    >
                       Buy
                     </a>
                   )}
