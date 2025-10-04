@@ -11,7 +11,7 @@ export default function Inventory() {
 
   // Step 2: Fetch inventory from API on mount
   useEffect(() => {
-    fetch("/api/inventory")
+    fetch("/api/items")
       .then((res) => res.json())
       .then((data) => setInventory(data))
       .catch((err) => console.error(err));
@@ -24,7 +24,7 @@ export default function Inventory() {
 
     // Step 2: Send new item to API
     try {
-      const res = await fetch("/api/inventory", {
+      const res = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newItem),
